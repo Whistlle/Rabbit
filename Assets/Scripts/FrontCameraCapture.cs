@@ -102,12 +102,13 @@ public class FrontCameraCapture : MonoBehaviour
         //BeforeRenderer.sprite = Sprite.Create()
         MainClass.Color[,] colors = GetColor255_2DArray(tex, pixels);
         DrawTexture(BeforeRenderer, pixels);
-        var gray = MainClass.ReadOutline(colors);
+		var gray = MainClass.ReadOutline(colors);
+		EmptyClass.获取轮廓坐标 (gray, gray.GetLength (0), gray.GetLength (1));
         var outColors = ChangeTo01Colors(gray);
-        BeforeProcess.找四个角(colors);
-        var averageColor = AfterProcess.在轮廓中取色(GrayToTo255Colors(gray), colors);
-        Debug.LogFormat("平均色：R{0} G{1} B{2}", averageColor.r, averageColor.g, averageColor.b);
-        SetTextureColor(averageColor.ChangeToUnityColor());
+        //BeforeProcess.找四个角(colors);
+        //var averageColor = AfterProcess.在轮廓中取色(GrayToTo255Colors(gray), colors);
+        //Debug.LogFormat("平均色：R{0} G{1} B{2}", averageColor.r, averageColor.g, averageColor.b);
+        //SetTextureColor(averageColor.ChangeToUnityColor());
         //AfterRenderer.sprite
         Texture2D texture = new Texture2D(tex.width, tex.height);
         texture.SetPixels(outColors);
