@@ -136,6 +136,26 @@ namespace ImageColor
             averageColor /= (2*取色范围+1) * (2*取色范围+1);
             return averageColor;
         }
+
+        public static List<Coord> 从灰度数组中提取轮廓坐标(double[,] gray)
+        {
+            List<Coord> coords = new List<Coord>();
+            for (int h = 0; h < gray.GetLength(0); ++h)
+            {
+                for (int w = 0; w < gray.GetLength(1); ++w)
+                {
+                    if (Math.Abs(gray[h, w] - 255) < double.Epsilon)
+                    {
+                        continue;
+                    }
+                    else
+                    {
+                        coords.Add(new Coord(h, w));
+                    }
+                }
+            }
+            return coords;
+        }
     }
 }
 

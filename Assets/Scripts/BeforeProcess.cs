@@ -19,10 +19,12 @@ namespace ImageColor
             for (int h = 0; h < image.GetLength(0); ++h)
             {
                 int blackCount = 0;
+                int maxBlackCount = 0;
                 Coord? blackLineBegin = null;
                 bool lastPointBlack = false;
                 for (int w = 0; w < image.GetLength(1); ++w)
                 {
+                    
                     //扫每行获取黑色数值
                     if (IsBlack(image[h, w]))
                     {
@@ -42,88 +44,46 @@ namespace ImageColor
                     }
                     else
                     {
+                        if (blackCount > maxBlackCount)
+                        {
+                            maxBlackCount = blackCount;
+                        }
                         blackCount = 0;
                         blackLineBegin = null;
                         lastPointBlack = false;
                     }
                 }
-                if (blackCount == 0) continue;
+                if (maxBlackCount == 0) continue;
                 if (lastBlackCount < 0 || lastlastBlackCount < 0)
                 {
+                    lastlastBlackCount = lastBlackCount;
+                    lastBlackCount = maxBlackCount;
                     continue;
                 }
                 
                 //中间那行比上下两行都大
-                if (lastBlackCount >= lastlastBlackCount && lastBlackCount > blackCount)
+                if (lastBlackCount >= lastlastBlackCount && lastBlackCount > maxBlackCount)
                 {
                     if (blackLineBegin.HasValue)
                     {
                         四个角.Add(blackLineBegin.Value);
-                        return;
+                        break;
                     }
                 }
                 lastlastBlackCount = lastBlackCount;
-                lastBlackCount = blackCount;
+                lastBlackCount = maxBlackCount;
             }
 
-            //上到下，左至右
-            for (int h = image.GetLength(0)-1; h >=0; --h)
-            {
-                int blackCount = 0;
-                Coord? blackLineBegin = null;
-                bool lastPointBlack = false;
-                for (int w = 0; w < image.GetLength(1); ++w)
-                {
-                    //扫每行获取黑色数值
-                    if (IsBlack(image[h, w]))
-                    {
-                        if (blackCount == 0)
-                        {
-                            ++blackCount;
-                            lastPointBlack = true;
-                            if (blackLineBegin == null)
-                            {
-                                blackLineBegin = new Coord(h, w);
-                            }
-                        }
-                        else if (lastPointBlack)
-                        {
-                            ++blackCount;
-                        }
-                    }
-                    else
-                    {
-                        blackCount = 0;
-                        blackLineBegin = null;
-                        lastPointBlack = false;
-                    }
-                }
-                if (blackCount == 0) continue;
-                if (lastBlackCount < 0 || lastlastBlackCount < 0)
-                {
-                    continue;
-                }
+            lastlastBlackCount = -1;
+            lastBlackCount = -1;
 
-                //中间那行比上下两行都大
-                if (lastBlackCount >= lastlastBlackCount && lastBlackCount > blackCount)
-                {
-                    if (blackLineBegin.HasValue)
-                    {
-                        四个角.Add(blackLineBegin.Value);
-                        return;
-                    }
-                }
-                lastlastBlackCount = lastBlackCount;
-                lastBlackCount = blackCount;
-            }
-
-            //下到上，右至左
             for (int h = 0; h < image.GetLength(0); ++h)
             {
                 int blackCount = 0;
+                int maxBlackCount = 0;
                 Coord? blackLineBegin = null;
                 bool lastPointBlack = false;
-                for (int w = 0; w < image.GetLength(1); ++w)
+                for (int w = image.GetLength(1)-1; w <=0; --w)
                 {
                     //扫每行获取黑色数值
                     if (IsBlack(image[h, w]))
@@ -144,33 +104,42 @@ namespace ImageColor
                     }
                     else
                     {
+                        if (blackCount > maxBlackCount)
+                        {
+                            maxBlackCount = blackCount;
+                        }
                         blackCount = 0;
                         blackLineBegin = null;
                         lastPointBlack = false;
                     }
                 }
-                if (blackCount == 0) continue;
+                if (maxBlackCount == 0) continue;
                 if (lastBlackCount < 0 || lastlastBlackCount < 0)
                 {
+                    lastlastBlackCount = lastBlackCount;
+                    lastBlackCount = maxBlackCount;
                     continue;
                 }
 
                 //中间那行比上下两行都大
-                if (lastBlackCount >= lastlastBlackCount && lastBlackCount > blackCount)
+                if (lastBlackCount >= lastlastBlackCount && lastBlackCount > maxBlackCount)
                 {
                     if (blackLineBegin.HasValue)
                     {
                         四个角.Add(blackLineBegin.Value);
-                        return;
+                        break;
                     }
                 }
                 lastlastBlackCount = lastBlackCount;
-                lastBlackCount = blackCount;
+                lastBlackCount = maxBlackCount;
             }
-            //上到下 右至左
-            for (int h = image.GetLength(0) - 1; h >= 0; --h)
+
+            lastlastBlackCount = -1;
+            lastBlackCount = -1;
+            for (int h = image.GetLength(0)-1; h <=0; --h)
             {
                 int blackCount = 0;
+                int maxBlackCount = 0;
                 Coord? blackLineBegin = null;
                 bool lastPointBlack = false;
                 for (int w = 0; w < image.GetLength(1); ++w)
@@ -194,30 +163,96 @@ namespace ImageColor
                     }
                     else
                     {
+                        if (blackCount > maxBlackCount)
+                        {
+                            maxBlackCount = blackCount;
+                        }
                         blackCount = 0;
                         blackLineBegin = null;
                         lastPointBlack = false;
                     }
                 }
-                if (blackCount == 0) continue;
+                if (maxBlackCount == 0) continue;
                 if (lastBlackCount < 0 || lastlastBlackCount < 0)
                 {
+                    lastlastBlackCount = lastBlackCount;
+                    lastBlackCount = maxBlackCount;
                     continue;
                 }
 
                 //中间那行比上下两行都大
-                if (lastBlackCount >= lastlastBlackCount && lastBlackCount > blackCount)
+                if (lastBlackCount >= lastlastBlackCount && lastBlackCount > maxBlackCount)
                 {
                     if (blackLineBegin.HasValue)
                     {
                         四个角.Add(blackLineBegin.Value);
-                        return;
+                        break;
                     }
                 }
                 lastlastBlackCount = lastBlackCount;
-                lastBlackCount = blackCount;
+                lastBlackCount = maxBlackCount;
             }
-            if(四个角.Count!= 4)
+
+            lastlastBlackCount = -1;
+            lastBlackCount = -1;
+
+            for (int h = image.GetLength(0) - 1; h <= 0; --h)
+            {
+                int blackCount = 0;
+                int maxBlackCount = 0;
+                Coord? blackLineBegin = null;
+                bool lastPointBlack = false;
+                for (int w = image.GetLength(1) - 1; w <= 0; --w)
+                {
+                    //扫每行获取黑色数值
+                    if (IsBlack(image[h, w]))
+                    {
+                        if (blackCount == 0)
+                        {
+                            ++blackCount;
+                            lastPointBlack = true;
+                            if (blackLineBegin == null)
+                            {
+                                blackLineBegin = new Coord(h, w);
+                            }
+                        }
+                        else if (lastPointBlack)
+                        {
+                            ++blackCount;
+                        }
+                    }
+                    else
+                    {
+                        if (blackCount > maxBlackCount)
+                        {
+                            maxBlackCount = blackCount;
+                        }
+                        blackCount = 0;
+                        blackLineBegin = null;
+                        lastPointBlack = false;
+                    }
+                }
+                if (maxBlackCount == 0) continue;
+                if (lastBlackCount < 0 || lastlastBlackCount < 0)
+                {
+                    lastlastBlackCount = lastBlackCount;
+                    lastBlackCount = maxBlackCount;
+                    continue;
+                }
+
+                //中间那行比上下两行都大
+                if (lastBlackCount >= lastlastBlackCount && lastBlackCount > maxBlackCount)
+                {
+                    if (blackLineBegin.HasValue)
+                    {
+                        四个角.Add(blackLineBegin.Value);
+                        break;
+                    }
+                }
+                lastlastBlackCount = lastBlackCount;
+                lastBlackCount = maxBlackCount;
+            }
+            if (四个角.Count!= 4)
                 Debug.LogErrorFormat("找四个角: Error! 输出了{0}个坐标", 四个角.Count);
             for (int i = 0; i < 四个角.Count; ++i)
             {
@@ -235,10 +270,10 @@ namespace ImageColor
         {
             if (color == MainClass.Color.BLACK) return true;
             float gray = 灰度值(color);
-            Vector4 line0_255 = new Vector4(0f,0f,0f,0f) - new Vector4(255f,255f,255f);
-            float cos = Vector4.Dot(line0_255, (Vector4) color) / (line0_255.magnitude * ((Vector4) color).magnitude);
+            Vector4 line0_255 = new Vector4(255f, 255f, 255f) -  new Vector4(0f,0f,0f,0f);
+            float cos = Vector4.Dot(line0_255, (Vector3) color) / (line0_255.magnitude * ((Vector3) color).magnitude);
             float sin = Mathf.Sqrt(1 - cos * cos);
-            float distance = sin * ((Vector4) color).magnitude;
+            float distance = sin * ((Vector3) color).magnitude;
            // float distance = Vector4.Distance((Vector4) MainClass.Color.WHITE, (Vector4) color);
             if (distance < 15 && gray < 111)
             {
