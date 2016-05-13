@@ -23,9 +23,10 @@ public class FrontCameraCapture : MonoBehaviour
             WebCamDevice[] devices = WebCamTexture.devices;
             deviceName = devices[0].name;
             //设置摄像机摄像的区域
-            tex = new WebCamTexture(deviceName, 400, 600);//, Screen.currentResolution.width, Screen.currentResolution.height);//, Screen.width, Screen.height, 12);
-            tex.Play(); //开始摄像
             _start = true;
+            tex = new WebCamTexture(deviceName,
+                                   ImageCanvas.worldCamera.pixelWidth, ImageCanvas.worldCamera.pixelHeight, 12);
+            //planeT.renderer.material.mainTexture = tex;
         }
     }
 
@@ -136,13 +137,14 @@ public class FrontCameraCapture : MonoBehaviour
         //   0.5f, out reg_img, out reg_x, out reg_y);
         //   var scale = ImageCanvas.GetComponent<CanvasScaler>().
         var lsd = LSD.Lsd(ref n_out, FlattenDoubleArray(原灰度), tex.width, tex.height);
-        Texture2D texture = new Texture2D(Screen.width, Screen.height);
-        //   Color[] empty = new Color[tex.width* tex.height];
-        //  for (int i = 0; i < empty.Length; ++i)
-        //  {
-        //y      empty[i] = new Color(0,0,0,0);
-        //  }
-        //  texture.SetPixels(empty);
+        //  AfterImage.canvasRenderer.set
+        Texture2D texture = new Texture2D(tex.width, tex.height);
+        Color[] empty = new Color[tex.width * tex.height];
+        for (int i = 0; i < empty.Length; ++i)
+        {
+            empty[i] = new Color(0, 0, 0, 0);
+        }
+        texture.SetPixels(empty);
         for (int i = 0; i < n_out; ++i)
         {
             int x1, x2, y1, y2;
@@ -241,7 +243,7 @@ public class FrontCameraCapture : MonoBehaviour
     void DrawTexture(SpriteRenderer renderer, Texture2D texture)
     {
        texture.Apply();
-        AfterImage.texture = texture;
+        AfterImage.canvasRenderer.SetTexture(texture);
         AfterImage.SetNativeSize();
         AfterImage.GetComponent<RectTransform>().anchoredPosition = new Vector2(0,0);
         //RenderCamera.targetTexture = texture;

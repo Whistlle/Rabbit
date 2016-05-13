@@ -160,7 +160,6 @@ GameObject:
   m_Component:
   - 4: {fileID: 422441860}
   - 212: {fileID: 422441861}
-  - 68: {fileID: 422441862}
   m_Layer: 12
   m_Name: ImageAfter
   m_TagString: Untagged
@@ -175,7 +174,7 @@ Transform:
   m_PrefabInternal: {fileID: 0}
   m_GameObject: {fileID: 422441859}
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -0.07, y: -1.54, z: 7.76}
+  m_LocalPosition: {x: -0.07, y: 0.03, z: 7.76}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 1943111692}
@@ -210,22 +209,6 @@ SpriteRenderer:
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
   m_FlipY: 0
---- !u!68 &422441862
-EdgeCollider2D:
-  m_ObjectHideFlags: 0
-  m_PrefabParentObject: {fileID: 0}
-  m_PrefabInternal: {fileID: 0}
-  m_GameObject: {fileID: 422441859}
-  m_Enabled: 1
-  m_Density: 1
-  m_Material: {fileID: 0}
-  m_IsTrigger: 0
-  m_UsedByEffector: 0
-  m_Offset: {x: 0, y: 0}
-  m_Points:
-  - {x: -2.56, y: 0}
-  - {x: 1.3232902, y: -0.8054333}
-  - {x: 2.56, y: 0}
 --- !u!1 &485129175
 GameObject:
   m_ObjectHideFlags: 0
@@ -485,11 +468,11 @@ GameObject:
   - 114: {fileID: 1092030517}
   m_Layer: 0
   m_Name: DebugCamera
-  m_TagString: MainCamera
+  m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!81 &1092030511
 AudioListener:
   m_ObjectHideFlags: 0
@@ -566,7 +549,7 @@ MonoBehaviour:
   m_PrefabParentObject: {fileID: 0}
   m_PrefabInternal: {fileID: 0}
   m_GameObject: {fileID: 1092030510}
-  m_Enabled: 1
+  m_Enabled: 0
   m_EditorHideFlags: 0
   m_Script: {fileID: 11500000, guid: 44e2754f6c96c48458eb3edfb752f93a, type: 3}
   m_Name: 
@@ -1019,13 +1002,29 @@ GameObject:
   - 20: {fileID: 1943111691}
   - 124: {fileID: 1943111690}
   - 92: {fileID: 1943111689}
+  - 114: {fileID: 1943111693}
+  - 114: {fileID: 1943111688}
   m_Layer: 0
   m_Name: GameCamera
-  m_TagString: Untagged
+  m_TagString: MainCamera
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
+--- !u!114 &1943111688
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 1943111687}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c293bdbeecce8ae49bae0284f9cbabef, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  ARCamera: {fileID: 0}
+  shouldMoveARCamera: 0
+  RenderImage: {fileID: 422441861}
 --- !u!92 &1943111689
 Behaviour:
   m_ObjectHideFlags: 0
@@ -1087,6 +1086,33 @@ Transform:
   - {fileID: 422441860}
   m_Father: {fileID: 0}
   m_RootOrder: 2
+--- !u!114 &1943111693
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_PrefabParentObject: {fileID: 0}
+  m_PrefabInternal: {fileID: 0}
+  m_GameObject: {fileID: 1943111687}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 12674133fa60fbe4796c6e212fe72a1d, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  requestDeviceName: 
+  requestWidth: 640
+  requestHeight: 480
+  requestIsFrontFacing: 1
+  flipVertical: 0
+  flipHorizontal: 0
+  OnInitedEvent:
+    m_PersistentCalls:
+      m_Calls: []
+    m_TypeName: UnityEngine.Events.UnityEvent, UnityEngine, Version=0.0.0.0, Culture=neutral,
+      PublicKeyToken=null
+  OnDisposedEvent:
+    m_PersistentCalls:
+      m_Calls: []
+    m_TypeName: UnityEngine.Events.UnityEvent, UnityEngine, Version=0.0.0.0, Culture=neutral,
+      PublicKeyToken=null
 --- !u!1 &2068291611
 GameObject:
   m_ObjectHideFlags: 0
@@ -1162,7 +1188,7 @@ Camera:
   m_Depth: -26.1
   m_CullingMask:
     serializedVersion: 2
-    m_Bits: 4294967295
+    m_Bits: 32
   m_RenderingPath: -1
   m_TargetTexture: {fileID: 0}
   m_TargetDisplay: 0
@@ -1214,7 +1240,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &2109786159
 RectTransform:
   m_ObjectHideFlags: 0
