@@ -1,15 +1,31 @@
 ﻿using UnityEngine;
 using System.Collections;
+using UnityEngine.UI;
 
 public class GameManager : MonoBehaviour
 {
-    public GameObject Ball;
-    public Vector3 BallOriginPos;
+    static GameManager _instance;
+
+    public static GameManager Instance
+    {
+        get
+        {
+            if (_instance == null)
+            {
+                _instance = GameObject.Find("GameManager").GetComponent<GameManager>();
+            }
+            return _instance;
+        }
+    }
+
+    void Awake()
+    {
+        _instance = this;
+    }
+
 	// Use this for initialization
 	void Start ()
 	{
-	    Ball = GameObject.Find("ball");
-	    BallOriginPos = Ball.transform.position;
 	    ARCamera = GameObject.Find("GameCamera").GetComponent<WebCamTextureProcess>();
 	}
 	
@@ -30,15 +46,62 @@ public class GameManager : MonoBehaviour
         ARCamera.OnPauseButton();
     }
 
+    public Ball Ball_;
+    public HoleTrigger Hole;
+
     public void OnStartGame()
     {
-        ARCamera.IsCreateCollider = true;
-        Ball.GetComponent<Rigidbody2D>().isKinematic = false;
+        Reset();
     }
 
     public void Reset()
     {
-        Ball.transform.position = BallOriginPos;
-        Ball.GetComponent<Rigidbody2D>().isKinematic = true;
+        ARCamera.CleanPhysicsEdge();
+        ARCamera.OnPlayButton();
+        ARCamera.IsCreateCollider = false;
+        Ball_.Reset();
+        Hole.Reset();
+        StartCoroutine(倒计时());
     }
+    
+    public Text CountDown;
+
+    public IEnumerator 倒计时()
+    {
+        int num = 5;
+        while (num >= 0)
+        {         
+            CountDown.text = num.ToString();
+            num--;
+            yield return new WaitForSeconds(1);
+        }
+        CountDown.text = "";
+        ARCamera.OnPauseButton();
+        Ball_.Active();
+        //ARCamera.IsCreateCollider = true;
+        ARCamera.SetPhysicsEdge();
+        IsGameStart = true;
+    }
+
+    public int ScoreCount;
+    public Text ScoreText;
+
+   public bool IsGameStart = false;
+    public void Success()
+    {
+        Reset();
+        ScoreCount++;
+        ScoreText.text = ScoreCount.ToString();
+        IsGameStart = false;
+    }
+
+    public void Fail()
+    {
+        Reset();
+        ScoreCount--;
+        ScoreText.text = ScoreCount.ToString();
+        IsGameStart = false;
+    }
+
+//}
 }

@@ -155,13 +155,13 @@ PlayerSettings:
   iOSLaunchScreeniPadSize: 100
   iOSLaunchScreeniPadCustomXibPath: 
   iOSDeviceRequirements: []
-  AndroidTargetDevice: 0
+  AndroidTargetDevice: 3
   AndroidSplashScreenScale: 0
   androidSplashScreen: {fileID: 0}
   AndroidKeystoreName: /Users/phil/Dropbox/ARToolworks-engineering/Release engineering/Android
     app signing/artoolworks-release.keystore
   AndroidKeyaliasName: 
-  AndroidTVCompatibility: 1
+  AndroidTVCompatibility: 0
   AndroidIsGame: 1
   androidEnableBanner: 1
   m_AndroidBanners:
@@ -340,6 +340,8 @@ PlayerSettings:
   scriptingDefineSymbols:
     1: 
     2: 
+    4: VUFORIA_IOS_SETTINGS
+    7: VUFORIA_ANDROID_SETTINGS
   metroPackageName: ARToolKitforUnitydemo
   metroPackageVersion: 1.0.0.0
   metroCertificatePath: 
@@ -445,7 +447,7 @@ PlayerSettings:
   WebGL::memorySize: 256
   iOS::Architecture: 0
   iOS::EnableIncrementalBuildSupportForIl2cpp: 0
-  iOS::ScriptingBackend: 0
+  iOS::ScriptingBackend: 1
   boolPropertyNames:
   - WebGL::analyzeBuildSize
   - WebGL::dataCaching
