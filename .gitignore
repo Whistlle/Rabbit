@@ -30,3 +30,5 @@ obj/
 ehthumbs.db
 Thumbs.db
 
+Assets/OpenCVForUnity/
+packages/OpenCVSharp.2.4.0.1/

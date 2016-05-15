@@ -7,3 +7,5 @@ EditorBuildSettings:
   m_Scenes:
   - enabled: 0
     path: Assets/ARToolKit5-Unity/Example Scenes/CubemarkerScene.unity
+  - enabled: 1
+    path: Assets/Scene/scene_1.unity

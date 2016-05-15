@@ -310,6 +310,31 @@ namespace ImageColor
             return gray;
         }
 
+        public static double[,] RGBToGray(UnityEngine.Color[,] image, int m, int n)
+        {
+            double[,] gray = new double[m, n];
+            for (int i = 0; i < m; ++i)
+            {
+                for (int j = 0; j < n; ++j)
+                {
+                    //gray [i, j] = (image [i, j].r * 299 + image [i, j].g * 587 + image [i, j].b * 114 + 500) / 1000;
+                    gray[i, j] = (image[i, j].r * 299 + image[i, j].g * 587 + image[i, j].b * 114) / 1000 / 255;
+                }
+            }
+
+
+            return gray;
+        }
+
+        public static double[] RGBToGray(UnityEngine.Color[] image, int m, int n)
+        {
+            double[] gray = new double[image.Length];
+            for (int i = 0; i < image.Length; ++i)
+            {
+                gray[i] = (image[i].r * 255 * 299 + image[i].g * 255 * 587 + image[i].b * 255 * 114) / 1000;
+            }
+            return gray;
+        }
         //返回法线两点坐标
         private static int[] get_coords(double angle)
         {

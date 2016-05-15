@@ -10,19 +10,11 @@ namespace ImageColor
 {
     public static class LSD
     {
+#if UNITY_EDITOR
         [DllImport("lsd", EntryPoint = "lsd")]
         extern static IntPtr Intercall_lsd(ref int n_out,
             [In, Out] [MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 1)] double[] img,
             int X, int Y);
-
-
-        public static double[] Lsd(ref int n_out, double[] img, int X, int Y)
-        {
-            var re = Intercall_lsd(ref n_out, img, X, Y);
-            double[] value = new double[7*n_out];
-            Marshal.Copy(re, value, 0, 7 * n_out);
-            return value;
-        }
 
         [DllImport("lsd", EntryPoint = "lsd_scale_region")]
         extern static IntPtr Intercall_lsd_scale_region(ref int n_out,
@@ -32,7 +24,49 @@ namespace ImageColor
             IntPtr ref_img,
             ref int reg_x, ref int reg_y);
 
+        //double* lsd_scale(int* n_out, double* img, int X, int Y, double scale);
+        [DllImport("lsd", EntryPoint = "lsd_scale")]
+        extern static IntPtr Intercall_lsd_scale(ref int n_out,
+            [In, Out] [MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 1)] double[] img,
+            int X, int Y,
+            double scale);
+#elif UNITY_ANDROID
+       [DllImport("liblsd_android", EntryPoint = "lsd", CallingConvention = CallingConvention.Cdecl)]
+        extern static IntPtr Intercall_lsd(ref int n_out,
+            [In, Out] [MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 1)] double[] img,
+            int X, int Y);
 
+        [DllImport("liblsd_android", EntryPoint = "lsd_scale")]
+        extern static IntPtr Intercall_lsd_scale(ref int n_out,
+            [In, Out] [MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 1)] double[] img,
+            int X, int Y,
+            double scale);
+
+        [DllImport("liblsd_android", EntryPoint = "lsd_scale_region", CallingConvention = CallingConvention.Cdecl)]
+        extern static IntPtr Intercall_lsd_scale_region(ref int n_out,
+            [In, Out] [MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 1)] double[] img,
+            int X, int Y,
+            double scale,
+            IntPtr ref_img,
+            ref int reg_x, ref int reg_y);
+#endif
+
+        #region Wrapper
+        public static double[] Lsd(ref int n_out, double[] img, int X, int Y)
+        {
+            var re = Intercall_lsd(ref n_out, img, X, Y);
+            double[] value = new double[7 * n_out];
+            Marshal.Copy(re, value, 0, 7 * n_out);
+            return value;
+        }
+
+        public static double[] Lsd_scale(ref int n_out, double[] img, int X, int Y, double scale)
+        {
+            var re = Intercall_lsd_scale(ref n_out, img, X, Y, scale);
+            double[] value = new double[7 * n_out];
+            Marshal.Copy(re, value, 0, 7 * n_out);
+            return value;
+        }
 
         public static double[] Lsd_scale_region(ref int n_out,
             double[] img,
@@ -44,27 +78,18 @@ namespace ImageColor
 
             //IntPtr[] ptrs = new IntPtr[(int)(Y*scale)];
             IntPtr intptr = Marshal.AllocHGlobal(sizeof(int));
-           // var bak = intptr;
-            /*
-                int size = img.Length * Marshal.SizeOf(typeof(int)); //获取结构体占用空间大小
+            // var bak = intptr;
 
-                IntPtr intptr = Marshal.AllocHGlobal(size); //声明一个同样大小的空间
-
-                Marshal.StructureToPtr(ref_img[0,0], intptr, true);
-
-    */
-            
-            reg_x = 0;
-            reg_y = 0;
-            
+            reg_x = reg_y = 0;
             var re = Intercall_lsd_scale_region(ref n_out, img, X, Y, 0.8f, intptr, ref reg_x, ref reg_y);
-           // Marshal.FreeHGlobal(bak);
+           
+            // Marshal.FreeHGlobal(bak);
             ref_img = new int[reg_y* reg_x];
             Marshal.Copy(intptr, ref_img, 0, reg_y* reg_x);
             Marshal.FreeHGlobal(intptr);
+            
+          //  ref_img = new int[reg_y, reg_x];
             /*
-            ref_img = new int[reg_y, reg_x];
-
             for (int i = 0; i < reg_y; ++i)
             {
                 int[] intArray = new int[reg_x];
@@ -74,12 +99,13 @@ namespace ImageColor
                     ref_img[i, j] = intArray[j];
                 }
             }*/
-            double[] value = new double[7 * n_out];
-            Marshal.Copy(re, value, 0, 7 * n_out);
-            Marshal.FreeHGlobal(re);
-            return value;
+             double[] value = new double[7 * n_out];
+               Marshal.Copy(re, value, 0, 7 * n_out);
+Marshal.FreeHGlobal(re);
+              return value;
         }
 
+        #endregion
         public static void GetLine(int n, double[] lines, out int x1, out int y1, out int x2, out int y2)
         {
             int index = 7 * (n);

@@ -1,13 +1,15 @@
 ﻿using System;
 using System.Collections;
 using System.Collections.Generic;
+using OpenCVForUnity;
+using OpenCVForUnitySample;
 using UnityEngine;
 using UnityEngine.Events;
 
 /// <summary>
 /// Web cam texture to mat helper.
 /// </summary>
-public class WebCamTextureHelper : MonoBehaviour
+public class WebCamTextureHelper_ : MonoBehaviour
 {
     /// <summary>
     /// The name of the device.
@@ -64,10 +66,11 @@ public class WebCamTextureHelper : MonoBehaviour
     /// </summary>
     bool initDone = false;
 
+    //public bool IsCreateEdge = false;
     /// <summary>
     /// The screenOrientation.
     /// </summary>
-    ScreenOrientation screenOrientation = ScreenOrientation.Unknown;
+    ScreenOrientation screenOrientation = ScreenOrientation.Portrait;
 
 
     // Use this for initialization
@@ -130,7 +133,7 @@ public class WebCamTextureHelper : MonoBehaviour
 
         if (!String.IsNullOrEmpty(requestDeviceName))
         {
-            //			Debug.Log ("deviceName is "+requestDeviceName);
+       //     Debug.Log ("deviceName is "+requestDeviceName);
             webCamTexture = new WebCamTexture(requestDeviceName, requestWidth, requestHeight);
         }
         else
@@ -143,7 +146,7 @@ public class WebCamTextureHelper : MonoBehaviour
                 if (WebCamTexture.devices[cameraIndex].isFrontFacing == requestIsFrontFacing)
                 {
 
-                    //					Debug.Log (cameraIndex + " name " + WebCamTexture.devices [cameraIndex].name + " isFrontFacing " + WebCamTexture.devices [cameraIndex].isFrontFacing);
+                   Debug.Log (cameraIndex + " name " + WebCamTexture.devices [cameraIndex].name + " isFrontFacing " + WebCamTexture.devices [cameraIndex].isFrontFacing);
 
                     webCamDevice = WebCamTexture.devices[cameraIndex];
 
@@ -158,10 +161,10 @@ public class WebCamTextureHelper : MonoBehaviour
 
         if (webCamTexture == null)
         {
-            //			Debug.Log ("webCamTexture is null");
+  			Debug.Log ("webCamTexture is null");
             if (WebCamTexture.devices.Length > 0)
             {
-                webCamDevice = WebCamTexture.devices[0];
+                webCamDevice = WebCamTexture.devices[1];
                 webCamTexture = new WebCamTexture(webCamDevice.name, requestWidth, requestHeight);
             }
             else
@@ -170,60 +173,57 @@ public class WebCamTextureHelper : MonoBehaviour
             }
         }
 
-        //		Debug.Log ("name " + webCamTexture.name + " width " + webCamTexture.width + " height " + webCamTexture.height + " fps " + webCamTexture.requestedFPS);
+       Debug.Log ("name " + webCamTexture.name + " width " + webCamTexture.width + " height " + webCamTexture.height + " fps " + webCamTexture.requestedFPS);
 
 
-
+        screenOrientation = ScreenOrientation.Portrait;
         // Starts the camera
-        webCamTexture.Play();
+        //  webCamTexture.Play();
+        /*
+
+          while (true)
+          {
+              //If you want to use webcamTexture.width and webcamTexture.height on iOS, you have to wait until webcamTexture.didUpdateThisFrame == 1, otherwise these two values will be equal to 16. (http://forum.unity3d.com/threads/webcamtexture-and-error-0x0502.123922/)
+  #if UNITY_IOS && !UNITY_EDITOR && (UNITY_4_6_3 || UNITY_4_6_4 || UNITY_5_0_0 || UNITY_5_0_1)
+              if (webCamTexture.width > 16 && webCamTexture.height > 16) {
+  #else
+              if (webCamTexture.didUpdateThisFrame)
+              {
+  #if UNITY_IOS && !UNITY_EDITOR && UNITY_5_2
+                      while (webCamTexture.width <= 16) {
+                          webCamTexture.GetPixels32 ();
+                          yield return new WaitForEndOfFrame ();
+                      } 
+  #endif
+  #endif
+
+                  Debug.Log("name " + webCamTexture.name + " width " + webCamTexture.width + " height " +
+                            webCamTexture.height + " fps " + webCamTexture.requestedFPS);
+                  Debug.Log("videoRotationAngle " + webCamTexture.videoRotationAngle + " videoVerticallyMirrored " +
+                            webCamTexture.videoVerticallyMirrored + " isFrongFacing " + webCamDevice.isFrontFacing);
+
+                  //				Debug.Log ("Screen.orientation " + Screen.orientation);
+                  screenOrientation = Screen.orientation;
+                  //					screenOrientation = ScreenOrientation.PortraitUpsideDown;
 
 
-        while (true)
-        {
-            //If you want to use webcamTexture.width and webcamTexture.height on iOS, you have to wait until webcamTexture.didUpdateThisFrame == 1, otherwise these two values will be equal to 16. (http://forum.unity3d.com/threads/webcamtexture-and-error-0x0502.123922/)
-#if UNITY_IOS && !UNITY_EDITOR && (UNITY_4_6_3 || UNITY_4_6_4 || UNITY_5_0_0 || UNITY_5_0_1)
-			if (webCamTexture.width > 16 && webCamTexture.height > 16) {
-#else
-            if (webCamTexture.didUpdateThisFrame)
-            {
-#if UNITY_IOS && !UNITY_EDITOR && UNITY_5_2
-					while (webCamTexture.width <= 16) {
-						webCamTexture.GetPixels32 ();
-						yield return new WaitForEndOfFrame ();
-					} 
-#endif
-#endif
 
-                Debug.Log("name " + webCamTexture.name + " width " + webCamTexture.width + " height " +
-                          webCamTexture.height + " fps " + webCamTexture.requestedFPS);
-                Debug.Log("videoRotationAngle " + webCamTexture.videoRotationAngle + " videoVerticallyMirrored " +
-                          webCamTexture.videoVerticallyMirrored + " isFrongFacing " + webCamDevice.isFrontFacing);
+                  //				webCamTexture.Stop ();
 
-                //				Debug.Log ("Screen.orientation " + Screen.orientation);
-                screenOrientation = Screen.orientation;
-                //					screenOrientation = ScreenOrientation.PortraitUpsideDown;
+                  initDone = true;
 
-#if !UNITY_EDITOR && !UNITY_STANDALONE
-										if (screenOrientation == ScreenOrientation.Portrait || screenOrientation == ScreenOrientation.PortraitUpsideDown) {
-												rotatedRgbaMat = new Mat (webCamTexture.width, webCamTexture.height, CvType.CV_8UC4);
-										}
-#endif
-
-                //				webCamTexture.Stop ();
-
-                initDone = true;
-
-                if (OnInitedEvent != null)
-                    OnInitedEvent.Invoke();
+                  if (OnInitedEvent != null)
+                      OnInitedEvent.Invoke();
 
 
-                break;
-            }
-            else
-            {
-                yield return 0;
-            }
-        }
+                  break;
+              }
+              else
+              {
+                  yield return 0;
+              }
+          }*/
+        yield return 0;
     }
 
     /// <summary>
@@ -241,8 +241,9 @@ public class WebCamTextureHelper : MonoBehaviour
     /// </summary>
     public void Play()
     {
-        if (initDone)
-            webCamTexture.Play();
+       //if (initDone)
+        initDone = true;
+        webCamTexture.Play();
     }
 
     /// <summary>
@@ -250,7 +251,7 @@ public class WebCamTextureHelper : MonoBehaviour
     /// </summary>
     public void Pause()
     {
-        if (initDone)
+        //if (initDone)
             webCamTexture.Pause();
     }
 
@@ -283,6 +284,8 @@ public class WebCamTextureHelper : MonoBehaviour
         return webCamTexture;
     }
 
+    Mat rgbaMat;
+
     /// <summary>
     /// Gets the web cam device.
     /// </summary>
@@ -298,6 +301,7 @@ public class WebCamTextureHelper : MonoBehaviour
     /// <returns><c>true</c>, if update this frame was dided, <c>false</c> otherwise.</returns>
     public bool didUpdateThisFrame()
     {
+        return true;
         if (!initDone)
             return false;
 

@@ -6,11 +6,13 @@ using ImageColor;
 #if UNITY_5_3
 using UnityEngine.SceneManagement;
 #endif
+using OpenCVForUnity;
+using OpenCVForUnitySample;
 
 /// <summary>
 /// Web cam texture marker based AR sample.
 /// </summary>
-[RequireComponent(typeof(WebCamTextureHelper))]
+[RequireComponent(typeof(WebCamTextureToMatHelper))]
 public class WebCamTextureProcess : MonoBehaviour
 {
 
@@ -45,6 +47,8 @@ public class WebCamTextureProcess : MonoBehaviour
     /// </summary>
     Matrix4x4 invertZM;
 
+    public bool IsCreateCollider = false;
+
     /// <summary>
     /// The should move AR camera.
     /// </summary>
@@ -54,13 +58,13 @@ public class WebCamTextureProcess : MonoBehaviour
     /// <summary>
     /// The web cam texture to mat helper.
     /// </summary>
-    WebCamTextureHelper webCamTextureHelper;
+    WebCamTextureToMatHelper webCamTextureHelper;
 
     // Use this for initialization
     void Start()
     {
 
-        webCamTextureHelper = gameObject.GetComponent<WebCamTextureHelper>();
+        webCamTextureHelper = gameObject.GetComponent<WebCamTextureToMatHelper>();
         webCamTextureHelper.Init();
 
     }
@@ -102,7 +106,7 @@ public class WebCamTextureProcess : MonoBehaviour
             Camera.main.orthographicSize = height / 2;
         }
 
-        gameObject.GetComponent<Renderer>().material.mainTexture = texture;
+        //    gameObject.GetComponent<Renderer>().material.mainTexture = texture;
 
 
         double apertureWidth = 0;
@@ -133,71 +137,143 @@ public class WebCamTextureProcess : MonoBehaviour
 
     // Update is called once per frame
     float _calCount = 0;
-    void LateUpdate()
-    {
 
+
+
+    void Update()
+    {
         if (webCamTextureHelper.isPlaying() && webCamTextureHelper.didUpdateThisFrame())
         {
             _calCount++;
-            if (_calCount >= 5)
+            if (_calCount >= 15)
             {
-                ProcessTexture();
+                
+                ProcessTextureOpenCV();
+                //ProcessTexture();
+                // SetPhysicsEdge(_lines);
                 _calCount = 0;
             }
         }
-
     }
 
-    
+    /*
+    void FixedUpdate()
+    {
+        if (webCamTextureHelper.isPlaying()) // && webCamTextureHelper.didUpdateThisFrame())
+        {
+
+            ProcessTexture();
+            _calCount = 0;
+
+        }
+
+    }*/
+
 
     void ProcessTexture()
     {
+        Profiler.BeginSample("Process Texture");
         var tex = webCamTextureHelper.GetWebCamTexture();
+        // Mat cameraTextureMat = new Mat();
+        //Utils.webCamTextureToMat(tex, cameraTextureMat);
+
         var pixels = tex.GetPixels();
-        MainClass.Color[,] colors = GetColor255_2DArray(tex, pixels);
-        var 原灰度 = MainClass.RGBToGray(colors, tex.height, tex.width);
+        // MainClass.Color[,] colors = GetColor255_2DArray(tex, pixels);
+        //var 原灰度 = MainClass.RGBToGray(colors, tex.height, tex.width);
         // var 图像增强 = MainClass.拉普拉斯(colors, tex.height, tex.width);
         //var 拉普拉斯灰度 = MainClass.RGBToGray(图像增强, tex.height, tex.width);
         //var 高斯滤波 = MainClass.Fspecial(colors, tex.height, tex.width);
         //var 高斯滤波灰度 = MainClass.RGBToGray(高斯滤波, tex.height, tex.width);
-
+        var 原灰度 = MainClass.RGBToGray(pixels, tex.height, tex.width);
         int[] reg_img;
         int reg_x;
         int reg_y;
         int n_out = 0;
+        Profiler.BeginSample("Call LSD");
+        var lsd = LSD.Lsd_scale(ref n_out, 原灰度, tex.width, tex.height, 0.5);
+        Profiler.EndSample();
 
-        var lsd = LSD.Lsd(ref n_out, FlattenDoubleArray(原灰度), tex.width, tex.height);
-        //  AfterImage.canvasRenderer.set
-        // Texture2D texture = new Texture2D(tex.width, tex.height);
         Texture2D texture = new Texture2D(tex.width, tex.width);
-        //   Color[] empty = new Color[tex.width* tex.height];
-        //  for (int i = 0; i < empty.Length; ++i)
-        //  {
-        //y      empty[i] = new Color(0,0,0,0);
-        //  }
-        //  texture.SetPixels(empty);
-        List<LineSegment> lines = new List<LineSegment>();
+
+        // List<LineSegment> lines = new List<LineSegment>();
+        _lines.Clear();
+
+        // var lsd = LSD.Lsd(ref n_out, 原灰度, tex.width, tex.height);
+        Profiler.BeginSample("Draw Line");
         for (int i = 0; i < n_out; ++i)
         {
             int x1, x2, y1, y2;
             //ImageCanvas.scaleFactor
             LSD.GetLineScale(i, lsd, out x1, out y1, out x2, out y2, new Vector2(tex.width, tex.height),
                 new Vector2(tex.width, tex.height));
-            lines.Add(new LineSegment(new Coord(y1, x1), new Coord(y2, x2)));
+            _lines.Add(new LineSegment(new Vector2(x1, y1), new Vector2(x2, y2)));
             MainClass.DrawLine(texture, x1, y1, x2, y2, Color.blue);
         }
-        // var finalColor = IntTo01Colors(reg_img);
-        //DrawTexture(AfterRenderer, , reg_y, reg_x);
+        Profiler.EndSample();
+
+        Profiler.BeginSample("Draw Texture");
         DrawTexture(RenderImage, texture);
-        SetPhysicsEdge(lines);
+        Profiler.EndSample();
+
+        if (IsCreateCollider)
+        {
+            SetPhysicsEdge(_lines);
+        }
+
+        Profiler.EndSample();
     }
+
+    void ProcessTextureOpenCV()
+    {
+        Profiler.BeginSample("Process Texture CV");
+        Mat imgMat = webCamTextureHelper.GetMat();
+        Core.flip(imgMat, imgMat, 1);
+        Mat grayMat = new Mat();
+        Imgproc.cvtColor(imgMat, grayMat, Imgproc.COLOR_RGB2GRAY);
+        var lsd = Imgproc.createLineSegmentDetector();
+
+        Profiler.BeginSample("lsd");
+        Mat lines = new Mat();
+        lsd.detect(grayMat, lines);
+        Profiler.EndSample();
+        
+        Mat processedImg = new Mat(grayMat.rows(), grayMat.cols() ,CvType.CV_8UC3, new Scalar(255,255,255,0));
+        lsd.drawSegments(processedImg, lines);
+        
+       // Core.flip(processedImg, processedImg, 1);
+        Texture2D texture = new Texture2D(processedImg.cols(), processedImg.rows(), TextureFormat.RGBA32, false);
+        Utils.matToTexture2D(processedImg, texture);
+       
+        DrawTexture(RenderImage, texture);
+        GetLines(lines);
+        
+        if (IsCreateCollider)
+        {  
+            SetPhysicsEdge(_lines);
+        }
+        
+        Profiler.EndSample();
+    }
+
+    void GetLines(Mat lines)
+    {
+        float[] linesArray = new float[lines.cols() * lines.rows() * lines.channels()];
+        lines.get(0, 0, linesArray);
+        _lines.Clear();
+        for (int i = 0; i < linesArray.Length; i = i + 4)
+        {
+            _lines.Add(new LineSegment(new Vector2((int)linesArray[i + 1], (int)linesArray[i + 0]), 
+                                       new Vector2((int)linesArray[i + 3], (int)linesArray[i + 2])));
+        }
+    }
+    List<LineSegment> _lines = new List<LineSegment>();
 
     struct LineSegment
     {
-        public Coord From;
-        public Coord To;
+        public Vector2 From;
+        public Vector2 To;
 
-        public LineSegment(Coord from, Coord to)
+        public LineSegment(Vector2 from, Vector2 to)
         {
             From = from;
             To = to;
@@ -206,11 +282,14 @@ public class WebCamTextureProcess : MonoBehaviour
 
     void SetPhysicsEdge(List<LineSegment> lines)
     {
+        Profiler.BeginSample("SetPhysicsEdge");
+
+
         var edge = RenderImage.GetComponent<EdgeCollider2D>();
         var pos = RenderImage.transform.localPosition;
         float width = RenderImage.sprite.texture.width / RenderImage.sprite.pixelsPerUnit;
         float height = RenderImage.sprite.texture.height / RenderImage.sprite.pixelsPerUnit;
-        var lbPos = new Vector3(pos.x - width / 2, pos.y - height / 2, pos.z);
+        var lbPos = new Vector3(pos.x - width / 2, pos.y + height, pos.z);
         float unitPerPixel = 1 / RenderImage.sprite.pixelsPerUnit;
         //    List<Vector2> points = new List<Vector2>();
         var edges = RenderImage.GetComponentsInChildren<EdgeCollider2D>();
@@ -220,28 +299,32 @@ public class WebCamTextureProcess : MonoBehaviour
         }
         foreach (var l in lines)
         {
-            float fromX = l.From.width * unitPerPixel + lbPos.x;
-            float fromY = l.From.height * unitPerPixel + lbPos.y;
-            float toX = l.To.width * unitPerPixel + lbPos.x;
-            float toY = l.To.height * unitPerPixel + lbPos.y;
+            float fromX = l.From.x * unitPerPixel + lbPos.x;
+            float fromY = -l.From.y * unitPerPixel + lbPos.y;
+            float toX = l.To.x * unitPerPixel + lbPos.x;
+            float toY = -l.To.y * unitPerPixel + lbPos.y;
             //points.Add(new Vector2(fromX, fromY));
             //points.Add(new Vector2(toX, toY));
             CreateEdgeObject(RenderImage.transform, new Vector2(fromX, fromY), new Vector2(toX, toY));
         }
+        Profiler.EndSample();
     }
 
     void CreateEdgeObject(Transform parent, Vector2 from, Vector2 to)
     {
         GameObject go = new GameObject("line collider");
         var phy = go.AddComponent<EdgeCollider2D>();
+        //  go.AddComponent<Rigidbody2D>();
         go.transform.parent = parent;
-        go.transform.localPosition = new Vector3(0,0,0);
+        go.transform.localPosition = new Vector3(0, 0, 0);
         Vector2[] points = new Vector2[2];
         points[0] = from;
         points[1] = to;
         phy.points = points;
     }
+
     public SpriteRenderer RenderImage;
+
     void DrawTexture(SpriteRenderer renderer, Texture2D texture)
     {
         texture.Apply();
@@ -249,8 +332,10 @@ public class WebCamTextureProcess : MonoBehaviour
         //AfterImage.SetNativeSize();
         //AfterImage.GetComponent<RectTransform>().anchoredPosition = new Vector2(0, 0);
         //RenderCamera.targetTexture = texture;
-        renderer.sprite = Sprite.Create(texture, new Rect(0, 0, texture.width, texture.height), new Vector2(0.5f, 0.5f));
+        renderer.sprite = Sprite.Create(texture, new UnityEngine.Rect(0, 0, texture.width, texture.height),
+            new Vector2(0.5f, 0.5f));
     }
+
 
     MainClass.Color[,] GetColor255_2DArray(Texture t, Color[] colors)
     {
@@ -260,11 +345,12 @@ public class WebCamTextureProcess : MonoBehaviour
             for (int j = 0; j < t.width; ++j)
             {
 
-                cs[i, j] = new MainClass.Color(colors[i * (t.width) + j]);// * 255f);              
+                cs[i, j] = new MainClass.Color(colors[i * (t.width) + j]); // * 255f);              
             }
         }
         return cs;
     }
+
     double[] FlattenDoubleArray(double[,] img)
     {
         double[] i = new double[img.Length];
@@ -278,6 +364,7 @@ public class WebCamTextureProcess : MonoBehaviour
         }
         return i;
     }
+
     /// <summary>
     /// Raises the disable event.
     /// </summary>
