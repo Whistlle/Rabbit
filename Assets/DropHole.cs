@@ -4,7 +4,7 @@ using System.Collections;
 public class DropHole : MonoBehaviour
 {
 
-    public HoleTrigger Hole;
+  //  public HoleTrigger Hole;
 
 	// Use this for initialization
 	void Start () {
@@ -18,9 +18,6 @@ public class DropHole : MonoBehaviour
 
     void OnCollisionEnter2D()
     {
-        if (Hole.InHole)
-        {
-            GameManager.Instance.Success();
-        }
+        GameManager.Instance.Success();
     }
 }

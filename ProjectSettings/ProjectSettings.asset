@@ -6,7 +6,7 @@ PlayerSettings:
   serializedVersion: 8
   AndroidProfiler: 0
   defaultScreenOrientation: 0
-  targetDevice: 2
+  targetDevice: 1
   useOnDemandResources: 0
   accelerometerFrequency: 60
   companyName: WHistlle
@@ -102,7 +102,7 @@ PlayerSettings:
   AndroidPreferredInstallLocation: 1
   aotOptions: 
   apiCompatibilityLevel: 1
-  stripEngineCode: 1
+  stripEngineCode: 0
   iPhoneStrippingLevel: 1
   iPhoneScriptCallOptimization: 1
   iPhoneBuildNumber: 0

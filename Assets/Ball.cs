@@ -35,10 +35,13 @@ public class Ball : MonoBehaviour
         transform.localPosition =new Vector3(OriginVector.x, OriginVector.y, transform.localPosition.z);
         RamdomColor();
     }
-
+	public PhysicsMaterial2D Material;
     public void RamdomColor()
     {
         var idx = UnityEngine.Random.Range(0, CollorBalls.Length);
         GetComponent<SpriteRenderer>().sprite = CollorBalls[idx];
+		GameObject.Destroy(GetComponent<PolygonCollider2D>());
+		gameObject.AddComponent<PolygonCollider2D>().sharedMaterial = Material;
+
     }
 }

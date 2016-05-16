@@ -49,22 +49,41 @@ namespace ImageColor
             double scale,
             IntPtr ref_img,
             ref int reg_x, ref int reg_y);
+#elif  UNITY_IOS
+		[DllImport("liblsd_android", EntryPoint = "lsd", CallingConvention = CallingConvention.Cdecl)]
+		extern static IntPtr Intercall_lsd(ref int n_out,
+			[In, Out] [MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 1)] double[] img,
+			int X, int Y);
+
+		[DllImport("liblsd_android", EntryPoint = "lsd_scale")]
+		extern static IntPtr Intercall_lsd_scale(ref int n_out,
+			[In, Out] [MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 1)] double[] img,
+			int X, int Y,
+			double scale);
+
+		[DllImport("liblsd_android", EntryPoint = "lsd_scale_region", CallingConvention = CallingConvention.Cdecl)]
+		extern static IntPtr Intercall_lsd_scale_region(ref int n_out,
+			[In, Out] [MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 1)] double[] img,
+			int X, int Y,
+			double scale,
+			IntPtr ref_img,
+			ref int reg_x, ref int reg_y);
 #endif
 
         #region Wrapper
         public static double[] Lsd(ref int n_out, double[] img, int X, int Y)
         {
-            var re = Intercall_lsd(ref n_out, img, X, Y);
+         //   var re = Intercall_lsd(ref n_out, img, X, Y);
             double[] value = new double[7 * n_out];
-            Marshal.Copy(re, value, 0, 7 * n_out);
+            //Marshal.Copy(re, value, 0, 7 * n_out);
             return value;
         }
 
         public static double[] Lsd_scale(ref int n_out, double[] img, int X, int Y, double scale)
         {
-            var re = Intercall_lsd_scale(ref n_out, img, X, Y, scale);
+         //   var re = Intercall_lsd_scale(ref n_out, img, X, Y, scale);
             double[] value = new double[7 * n_out];
-            Marshal.Copy(re, value, 0, 7 * n_out);
+           // Marshal.Copy(re, value, 0, 7 * n_out);
             return value;
         }
 
@@ -77,16 +96,16 @@ namespace ImageColor
         {
 
             //IntPtr[] ptrs = new IntPtr[(int)(Y*scale)];
-            IntPtr intptr = Marshal.AllocHGlobal(sizeof(int));
+            //IntPtr intptr = Marshal.AllocHGlobal(sizeof(int));
             // var bak = intptr;
 
             reg_x = reg_y = 0;
-            var re = Intercall_lsd_scale_region(ref n_out, img, X, Y, 0.8f, intptr, ref reg_x, ref reg_y);
+          //  var re = Intercall_lsd_scale_region(ref n_out, img, X, Y, 0.8f, intptr, ref reg_x, ref reg_y);
            
             // Marshal.FreeHGlobal(bak);
             ref_img = new int[reg_y* reg_x];
-            Marshal.Copy(intptr, ref_img, 0, reg_y* reg_x);
-            Marshal.FreeHGlobal(intptr);
+          //  Marshal.Copy(intptr, ref_img, 0, reg_y* reg_x);
+          //  Marshal.FreeHGlobal(intptr);
             
           //  ref_img = new int[reg_y, reg_x];
             /*
@@ -100,8 +119,8 @@ namespace ImageColor
                 }
             }*/
              double[] value = new double[7 * n_out];
-               Marshal.Copy(re, value, 0, 7 * n_out);
-Marshal.FreeHGlobal(re);
+           //    Marshal.Copy(re, value, 0, 7 * n_out);
+           //Marshal.FreeHGlobal(re);
               return value;
         }
 
@@ -141,11 +160,11 @@ Marshal.FreeHGlobal(re);
             int reg_x = 0;
             int reg_y = 0;
 
-            var re = Intercall_lsd_scale_region(ref n_out, img, X, Y, scale, intptr, ref reg_x, ref reg_y);
+            //var re = Intercall_lsd_scale_region(ref n_out, img, X, Y, scale, intptr, ref reg_x, ref reg_y);
 
             double[] value = new double[7 * n_out];
-            Marshal.Copy(re, value, 0, 7 * n_out);
-            Marshal.FreeHGlobal(re);
+            //Marshal.Copy(re, value, 0, 7 * n_out);
+            //Marshal.FreeHGlobal(re);
             return value;
         }
     }

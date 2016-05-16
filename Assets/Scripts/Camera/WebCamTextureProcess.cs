@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.Runtime.InteropServices.ComTypes;
 using ImageColor;
+using UnityEngine.UI;
 #if UNITY_5_3
 using UnityEngine.SceneManagement;
 #endif
@@ -225,8 +226,63 @@ public class WebCamTextureProcess : MonoBehaviour
     }
 
     [Range(0,1)]
-    public float 裁剪上半部分比例 = 0.3f;
-    int curHeight = 0;
+    public float 裁剪上半部分比例 = 0.233f;
+	public float 裁剪下半部分比例 = 0.251f;
+	public float 裁剪左半部分比例 = 0f;
+	public float 裁剪右半部分比例 = 0f;
+	public Scrollbar BarUpward;
+	public Scrollbar BarDownward;
+	public Scrollbar BarRight;
+	public Scrollbar BarLeft;
+
+	public Scrollbar BarEdgeY;
+	public Scrollbar BarEdgeX;
+	public Text UpText;
+	public Text DownText;
+	public Text LeftText;
+	public Text RightText;
+	public Text EdgeYText;
+	public Text EdgeXText;
+	public void OnUpwardScrollValueChange()
+	{
+		裁剪上半部分比例 = BarUpward.value;
+		UpText.text = 裁剪上半部分比例.ToString ();
+	}
+
+	public void OnDownScrollValueChange()
+	{
+		裁剪下半部分比例 = BarDownward.value;
+		DownText.text = 裁剪下半部分比例.ToString ();
+	}
+
+
+
+	public void OnLeftValueChange()
+	{
+		裁剪左半部分比例 = BarLeft.value;
+		LeftText.text = 裁剪左半部分比例.ToString();
+	}
+
+	public void OnRightValueChange()
+	{
+		裁剪右半部分比例 = BarRight.value;
+		RightText.text = 裁剪右半部分比例.ToString();
+	}
+
+	public void OnEdgeYPositionValueChange()
+	{
+		offsetY = (BarEdgeY.value * 2 - 1);
+		EdgeYText.text = offsetY.ToString ();
+	}
+
+	public void OnEdgeXPositionValueChange()
+	{
+		offsetX = (BarEdgeX.value * 2 - 1);
+		EdgeXText.text = offsetX.ToString ();
+	}
+
+   // int curHeight = 0;
+	float lineYToAdd = 0f;
     void ProcessTexture2DOpenCV()
     {
         Profiler.BeginSample("Process Texture CV");
@@ -237,17 +293,26 @@ public class WebCamTextureProcess : MonoBehaviour
         int originWidth = imgMat.width();
         int originHeight = imgMat.height();
 
-        curHeight = (int) (originHeight * 裁剪上半部分比例);
-        var roiImg = imgMat.adjustROI(-curHeight, 0, 0, 0);
-        Core.flip(imgMat, imgMat, 1);
+        int up = (int) (originHeight * 裁剪上半部分比例);
+		int down = (int)(originHeight * 裁剪下半部分比例);
+		int left = (int)(originWidth * 裁剪左半部分比例);
+		int right = (int)(originWidth * 裁剪右半部分比例);
+		var roiImg = imgMat.adjustROI(-up, -down, -left, -right);
+       // Core.flip(imgMat, imgMat, 1);
         Profiler.EndSample();
         Mat grayMat = new Mat();
 
         Imgproc.cvtColor(roiImg , grayMat, Imgproc.COLOR_RGB2GRAY);
-    //    Core.flip(grayMat, grayMat  , 0);
+        //Core.flip(grayMat, grayMat  , 0);
         var lsd = Imgproc.createLineSegmentDetector();
-        imgMat.adjustROI(curHeight, 0, 0, 0);
-        // grayMat.adjustROI(-cutHeight, 0, 0, 0);
+		imgMat.adjustROI(up, down, left, right);
+
+		//cut gray 上表面  会产生边缘线
+		//Mat cutMask = new Mat(up, originWidth, CvType.CV_8UC1, new Scalar(255));
+		//grayMat.adjustROI(0,-up, 0, 0);
+		//grayMat.setTo (new Scalar(255));
+		//grayMat.adjustROI(0, up, 0, 0);
+
         Profiler.BeginSample("lsd");
         Mat lines = new Mat();
         lsd.detect(grayMat, lines);
@@ -256,20 +321,22 @@ public class WebCamTextureProcess : MonoBehaviour
         Profiler.BeginSample("drawSegments");
         Mat processedImg = new Mat(originHeight, originWidth, CvType.CV_8UC3, new Scalar(255,255,255));
         
-        lsd.drawSegments(processedImg, lines);    
+      //  lsd.drawSegments(processedImg, lines);    
           
-        /*
-        float[] linesArray = new float[lines.cols() * lines.rows() * lines.channels()];
-        lines.get(0, 0, linesArray);
+		float[] linesArray = new float[lines.cols() * lines.rows() * lines.channels()];
+		lines.get(0, 0, linesArray);
 
-        for (int i = 0; i < linesArray.Length; i = i + 4)
-        {
-            Imgproc.line(processedImg, new Point(linesArray[i + 0], linesArray[i + 1]), new Point(linesArray[i + 2], linesArray[i + 3]), new Scalar(0, 0, 0), 2);
-        }*/
+		_lines.Clear ();
+		for (int i = 0; i < linesArray.Length; i = i + 4)
+		{
+			Imgproc.line(processedImg, new Point(linesArray[i + 0]+left, linesArray[i + 1]+up), new Point(linesArray[i + 2]+left, linesArray[i + 3]+up), new Scalar(255,86, 0), 2);
+			_lines.Add(new LineSegment(new Vector2((int)linesArray[i + 0]+left, (int)linesArray[i + 1]+up), 
+				new Vector2((int)linesArray[i + 2]+left, (int)linesArray[i + 3]+up)));
+		}
         Profiler.EndSample();
 
         Profiler.BeginSample("DrawTexture");
-        Core.flip(processedImg, processedImg, 0);
+      //  Core.flip(processedImg, processedImg, -1);
         Texture2D texture = new Texture2D(originWidth, originHeight, TextureFormat.RGBA32, false);
 
         //Mat mask = new Mat(cutHeight, originWidth, CvType.CV_8UC3, new Scalar(255, 255, 255));
@@ -291,12 +358,12 @@ public class WebCamTextureProcess : MonoBehaviour
         Profiler.EndSample();
 
         
-        if (IsCreateCollider)
-        {
+       // if (IsCreateCollider)
+       // {
             Profiler.BeginSample("SetPhysicsEdge");
-            //SetPhysicsEdge(_lines);
+         //  SetPhysicsEdge();
             Profiler.EndSample();
-        }
+        //}
         
         Profiler.EndSample();
     }
@@ -322,14 +389,12 @@ public class WebCamTextureProcess : MonoBehaviour
         Mat processedImg = new Mat(imgMat.rows(), imgMat.cols(), CvType.CV_8UC3, new Scalar(255, 255, 255));
       //  lsd.drawSegments(processedImg, lines);
         
+		//draw and get lines
         float[] linesArray = new float[lines.cols() * lines.rows() * lines.channels()];
         lines.get(0, 0, linesArray);
 
         Texture2D texture = new Texture2D(imgMat.cols(), imgMat.rows(), TextureFormat.RGBA32, false);
-        for (int i = 0; i < linesArray.Length; i = i + 4)
-        {
-            Imgproc.line(processedImg, new Point(linesArray[i + 0], linesArray[i + 1]), new Point(linesArray[i + 2], linesArray[i + 3]), new Scalar(255,86, 0), 2);
-        }
+
         Profiler.EndSample();
 
         Profiler.BeginSample("DrawTexture");
@@ -340,7 +405,8 @@ public class WebCamTextureProcess : MonoBehaviour
         Utils.matToTexture(processedImg, texture);
         DrawTexture(PlaneRenderer, texture);
         SetTextureScaleAndPos();
-        GetLines(lines);
+        
+		//GetLines(lines);
         Profiler.EndSample();
 
 
@@ -369,14 +435,7 @@ public class WebCamTextureProcess : MonoBehaviour
 
     void GetLines(Mat lines)
     {
-        float[] linesArray = new float[lines.cols() * lines.rows() * lines.channels()];
-        lines.get(0, 0, linesArray);
-        _lines.Clear();
-        for (int i = 0; i < linesArray.Length; i = i + 4)
-        {
-            _lines.Add(new LineSegment(new Vector2((int)linesArray[i + 0], -(int)linesArray[i + 1]), 
-                                       new Vector2((int)linesArray[i + 2], -(int)linesArray[i + 3])));
-        }
+
     }
     List<LineSegment> _lines = new List<LineSegment>();
 
@@ -391,8 +450,10 @@ public class WebCamTextureProcess : MonoBehaviour
             To = to;
         }
     }
-    [Range(0,1)]
-    public float offset = 0;
+    
+    float offsetX = 0.5f;
+    float offsetY = 0.5f;
+
     public void SetPhysicsEdge()
     {
         Profiler.BeginSample("SetPhysicsEdge");
@@ -401,7 +462,7 @@ public class WebCamTextureProcess : MonoBehaviour
         var pos = RenderImage.transform.localPosition;
         float width = RenderImage.sprite.texture.width / RenderImage.sprite.pixelsPerUnit;
         float height = RenderImage.sprite.texture.height / RenderImage.sprite.pixelsPerUnit;
-        var lbPos = new Vector3(pos.x - width / 2, pos.y + height*offset, pos.z);
+        var lbPos = new Vector3(pos.x - width *offsetX, pos.y + height*offsetY, pos.z);
         float unitPerPixel = 1 / RenderImage.sprite.pixelsPerUnit;
         //    List<Vector2> points = new List<Vector2>();
         CleanPhysicsEdge();
