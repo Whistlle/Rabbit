@@ -224,7 +224,9 @@ public class WebCamTextureProcess : MonoBehaviour
         Profiler.EndSample();
     }
 
+    [Range(0,1)]
     public float 裁剪上半部分比例 = 0.3f;
+    int curHeight = 0;
     void ProcessTexture2DOpenCV()
     {
         Profiler.BeginSample("Process Texture CV");
@@ -235,16 +237,16 @@ public class WebCamTextureProcess : MonoBehaviour
         int originWidth = imgMat.width();
         int originHeight = imgMat.height();
 
-        var cutHeight = (int) (originHeight * 裁剪上半部分比例);
-        var roiImg = imgMat.adjustROI(-cutHeight, 0, 0, 0);
+        curHeight = (int) (originHeight * 裁剪上半部分比例);
+        var roiImg = imgMat.adjustROI(-curHeight, 0, 0, 0);
         Core.flip(imgMat, imgMat, 1);
         Profiler.EndSample();
         Mat grayMat = new Mat();
 
         Imgproc.cvtColor(roiImg , grayMat, Imgproc.COLOR_RGB2GRAY);
-        Core.flip(grayMat, grayMat, 0);
+    //    Core.flip(grayMat, grayMat  , 0);
         var lsd = Imgproc.createLineSegmentDetector();
-        imgMat.adjustROI(cutHeight, 0, 0, 0);
+        imgMat.adjustROI(curHeight, 0, 0, 0);
         // grayMat.adjustROI(-cutHeight, 0, 0, 0);
         Profiler.BeginSample("lsd");
         Mat lines = new Mat();
@@ -267,7 +269,7 @@ public class WebCamTextureProcess : MonoBehaviour
         Profiler.EndSample();
 
         Profiler.BeginSample("DrawTexture");
-        // Core.flip(processedImg, processedImg, 1);
+        Core.flip(processedImg, processedImg, 0);
         Texture2D texture = new Texture2D(originWidth, originHeight, TextureFormat.RGBA32, false);
 
         //Mat mask = new Mat(cutHeight, originWidth, CvType.CV_8UC3, new Scalar(255, 255, 255));
@@ -372,8 +374,8 @@ public class WebCamTextureProcess : MonoBehaviour
         _lines.Clear();
         for (int i = 0; i < linesArray.Length; i = i + 4)
         {
-            _lines.Add(new LineSegment(new Vector2((int)linesArray[i + 0], (int)linesArray[i + 1]), 
-                                       new Vector2((int)linesArray[i + 2], (int)linesArray[i + 3])));
+            _lines.Add(new LineSegment(new Vector2((int)linesArray[i + 0], -(int)linesArray[i + 1]), 
+                                       new Vector2((int)linesArray[i + 2], -(int)linesArray[i + 3])));
         }
     }
     List<LineSegment> _lines = new List<LineSegment>();
