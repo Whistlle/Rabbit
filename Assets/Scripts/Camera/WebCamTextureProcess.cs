@@ -77,7 +77,7 @@ public class WebCamTextureProcess : MonoBehaviour
     public void OnWebCamTextureHelperInited()
     {
         Debug.Log("OnWebCamTextureToMatHelperInited");
-
+        /*
         var webCamTextureMat = webCamTextureHelper.GetWebCamTexture();
 
         texture = new Texture2D(webCamTextureMat.width, webCamTextureMat.height, TextureFormat.RGBA32, false);
@@ -89,15 +89,10 @@ public class WebCamTextureProcess : MonoBehaviour
         Debug.Log("Screen.width " + Screen.width + " Screen.height " + Screen.height + " Screen.orientation " +
                   Screen.orientation);
 
-        float width = 0;
-        float height = 0;
-
-        width = gameObject.transform.localScale.x;
-        height = gameObject.transform.localScale.y;
+        
 
         float imageScale = 1.0f;
-        float widthScale = (float) Screen.width / width;
-        float heightScale = (float) Screen.height / height;
+       
         if (widthScale < heightScale)
         {
             Camera.main.orthographicSize = (width * (float) Screen.height / (float) Screen.width) / 2;
@@ -109,8 +104,15 @@ public class WebCamTextureProcess : MonoBehaviour
         }
 
         //    gameObject.GetComponent<Renderer>().material.mainTexture = texture;
+        */
+        float width = 0;
+        float height = 0;
 
-
+        width = gameObject.transform.localScale.x;
+        height = gameObject.transform.localScale.y;
+        float widthScale = (float)Screen.width / width;
+        float heightScale = (float)Screen.height / height;
+        
         double apertureWidth = 0;
         double apertureHeight = 0;
         double[] fovx = new double[1];
@@ -126,8 +128,20 @@ public class WebCamTextureProcess : MonoBehaviour
         {
             ARCamera.fieldOfView = (float) fovy[0];
         }
+
+        //init lsd&&processImg
+        Lsd = Imgproc.createLineSegmentDetector();
+
+        Mat imgMat = webCamTextureHelper.GetMat();
+
+        int originWidth = imgMat.width();
+        int originHeight = imgMat.height();
+        ProcessedImg = new Mat(originHeight, originWidth, CvType.CV_8UC3, new Scalar(255, 255, 255));
     }
 
+   // public Texture2D TextureToDraw;
+    public LineSegmentDetector Lsd;
+    public Mat ProcessedImg;
     /// <summary>
     /// Raises the web cam texture to mat helper disposed event.
     /// </summary>
@@ -283,89 +297,70 @@ public class WebCamTextureProcess : MonoBehaviour
 
    // int curHeight = 0;
 	float lineYToAdd = 0f;
+    public float ImgScaleFactor = 0.4f;
     void ProcessTexture2DOpenCV()
     {
-        Profiler.BeginSample("Process Texture CV");
-        Profiler.BeginSample("GetMat");
-        
         Mat imgMat = webCamTextureHelper.GetMat();
 
-        int originWidth = imgMat.width();
-        int originHeight = imgMat.height();
-
-        int up = (int) (originHeight * 裁剪上半部分比例);
-		int down = (int)(originHeight * 裁剪下半部分比例);
-		int left = (int)(originWidth * 裁剪左半部分比例);
-		int right = (int)(originWidth * 裁剪右半部分比例);
-		var roiImg = imgMat.adjustROI(-up, -down, -left, -right);
-       // Core.flip(imgMat, imgMat, 1);
-        Profiler.EndSample();
-        Mat grayMat = new Mat();
-
-        Imgproc.cvtColor(roiImg , grayMat, Imgproc.COLOR_RGB2GRAY);
-        //Core.flip(grayMat, grayMat  , 0);
-        var lsd = Imgproc.createLineSegmentDetector();
-		imgMat.adjustROI(up, down, left, right);
-
-		//cut gray 上表面  会产生边缘线
-		//Mat cutMask = new Mat(up, originWidth, CvType.CV_8UC1, new Scalar(255));
-		//grayMat.adjustROI(0,-up, 0, 0);
-		//grayMat.setTo (new Scalar(255));
-		//grayMat.adjustROI(0, up, 0, 0);
-
-        Profiler.BeginSample("lsd");
-        Mat lines = new Mat();
-        lsd.detect(grayMat, lines);
-        Profiler.EndSample();
-        
-        Profiler.BeginSample("drawSegments");
-        Mat processedImg = new Mat(originHeight, originWidth, CvType.CV_8UC3, new Scalar(255,255,255));
-        
-      //  lsd.drawSegments(processedImg, lines);    
-          
-		float[] linesArray = new float[lines.cols() * lines.rows() * lines.channels()];
-		lines.get(0, 0, linesArray);
-
-		_lines.Clear ();
-		for (int i = 0; i < linesArray.Length; i = i + 4)
-		{
-			Imgproc.line(processedImg, new Point(linesArray[i + 0]+left, linesArray[i + 1]+up), new Point(linesArray[i + 2]+left, linesArray[i + 3]+up), new Scalar(255,86, 0), 2);
-			_lines.Add(new LineSegment(new Vector2((int)linesArray[i + 0]+left, (int)linesArray[i + 1]+up), 
-				new Vector2((int)linesArray[i + 2]+left, (int)linesArray[i + 3]+up)));
-		}
-        Profiler.EndSample();
-
-        Profiler.BeginSample("DrawTexture");
-      //  Core.flip(processedImg, processedImg, -1);
-        Texture2D texture = new Texture2D(originWidth, originHeight, TextureFormat.RGBA32, false);
-
-        //Mat mask = new Mat(cutHeight, originWidth, CvType.CV_8UC3, new Scalar(255, 255, 255));
-        //Mat dstroi = processedImg[new OpenCVForUnity.Rect(0, 10, originWidth, cutHeight]; // 拿到 dst指定区域子图像的引用 
-        // src(r).convertTo(dstroi, dstroi.type(), 1, 0);
-        //将上半部分抹去
-        //Imgproc.floodFill(processedImg, mask, new Point(0, 0), new Scalar(0, 0, 0));
-        //mask.convertTo(processedImg, CvType.CV_8UC3);
-        
-        Utils.matToTexture2D(processedImg, texture);
+       
 
         
-        //      Utils.matToTexture(); S
-        DrawTexture2D(RenderImage, texture);
-        AdjectTexture2DAndCamera();
+        using (
+            var resizedMat = new Mat((int) (imgMat.rows() * ImgScaleFactor), (int) (imgMat.cols() * ImgScaleFactor),
+                CvType.CV_8UC4))
+        {
+            Imgproc.resize(imgMat, resizedMat, new Size(resizedMat.rows(), resizedMat.cols()));
 
-        if (lines.height() == 0) return;
-        GetLines(lines);
-        Profiler.EndSample();
+            int originWidth = resizedMat.width();
+            int originHeight = resizedMat.height();
 
-        
-       // if (IsCreateCollider)
-       // {
-            Profiler.BeginSample("SetPhysicsEdge");
-         //  SetPhysicsEdge();
-            Profiler.EndSample();
-        //}
-        
-        Profiler.EndSample();
+            int up = (int)(originHeight * 裁剪上半部分比例);
+            int down = (int)(originHeight * 裁剪下半部分比例);
+            int left = (int)(originWidth * 裁剪左半部分比例);
+            int right = (int)(originWidth * 裁剪右半部分比例);
+
+            resizedMat.adjustROI(-up, -down, -left, -right);
+
+            using (Mat grayMat = new Mat())
+            {
+                Imgproc.cvtColor(resizedMat, grayMat, Imgproc.COLOR_RGB2GRAY);
+                resizedMat.adjustROI(up, down, left, right);
+                using (Mat lines = new Mat())
+                {
+                    Lsd.detect(grayMat, lines);
+                    if (lines.height() == 0) return;
+
+                    float[] linesArray = new float[lines.cols() * lines.rows() * lines.channels()];
+                    lines.get(0, 0, linesArray);
+                    _lines.Clear();
+                    ProcessedImg.setTo(Scalar.all(255));
+                    for (int i = 0; i < linesArray.Length; i = i + 4)
+                    {
+                        float fromX = linesArray[i + 0] + left;
+                        fromX /= ImgScaleFactor;
+                        float fromY = linesArray[i + 1] + up;
+                        fromY /= ImgScaleFactor;
+                        float toX = linesArray[i + 2] + left;
+                        toX /= ImgScaleFactor;
+                        float toY = linesArray[i + 3] + up;
+                        toY /= ImgScaleFactor;
+                        Imgproc.line(ProcessedImg, new Point(fromX, fromY),
+                            new Point(toX, toY), new Scalar(255, 86, 0), 2);
+                        _lines.Add(new LineSegment(
+                            new Vector2((int) fromX, (int) fromY),
+                            new Vector2((int) toX, (int) toY)));
+                    }
+                    var textureToDraw = new Texture2D(ProcessedImg.width(), ProcessedImg.height(), TextureFormat.RGBA32, false);
+                    Utils.matToTexture2D(ProcessedImg, textureToDraw);
+                    DrawTexture2D(RenderImage, textureToDraw);
+                    AdjectTexture2DAndCamera();
+                }
+            }
+        }
+
+
+        //  for test
+        //  SetPhysicsEdge();
     }
 
     void ProcessTextureOpenCV()
@@ -504,7 +499,14 @@ public class WebCamTextureProcess : MonoBehaviour
 
     void DrawTexture2D(SpriteRenderer renderer, Texture2D texture)
     {
+        if (renderer.sprite)
+        {
+            DestroyImmediate(renderer.sprite.texture);
+            DestroyImmediate(renderer.sprite);
+        }
+
         texture.Apply();
+        
         //AfterImage.canvasRenderer.SetTexture(texture);
         //AfterImage.SetNativeSize();
         //AfterImage.GetComponent<RectTransform>().anchoredPosition = new Vector2(0, 0);
